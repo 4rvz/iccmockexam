@@ -141,6 +141,11 @@
   /* Result states */
   .q.correct{ border-left-color: var(--pass); background: #f2f8f4; }
   .q.incorrect{ border-left-color: var(--fail); background: #fbf2f1; }
+  .q.revealed{ border-left-color: var(--brass); background: #faf8f0; }
+  .opt.is-answer{
+    border-color: var(--brass);
+    background: #f3eddc;
+  }
   .verdict{
     font-family: var(--mono);
     font-size: 12px;
@@ -150,6 +155,7 @@
   }
   .verdict.ok{ color: var(--pass); }
   .verdict.bad{ color: var(--fail); }
+  .verdict.reveal{ color: var(--brass-dark); }
 
   .submit-bar{
     position: sticky;
@@ -171,6 +177,21 @@
   }
   #submitBtn:hover{ background: #333; }
   #submitBtn:disabled{ background:#999; cursor:not-allowed; }
+
+  #showAnswersBtn{
+    font-family: var(--mono);
+    font-size: 14px;
+    letter-spacing: 0.03em;
+    background: transparent;
+    color: var(--brass-dark);
+    border: 1px solid var(--brass);
+    padding: 13px 26px;
+    border-radius: 3px;
+    cursor: pointer;
+    margin-left: 10px;
+  }
+  #showAnswersBtn:hover{ background: #efe9d9; }
+  #showAnswersBtn:disabled{ opacity: 0.45; cursor: not-allowed; background: transparent; }
 
   .missing-note{
     font-family: var(--mono);
@@ -247,6 +268,7 @@
 
   <div class="submit-bar">
     <button id="submitBtn">Submit exam</button>
+    <button id="showAnswersBtn">Show answers</button>
     <div class="missing-note" id="missingNote" style="display:none;"></div>
   </div>
 
@@ -323,7 +345,7 @@ function buildMC(){
     ['A','B','C','D'].forEach(letter=>{
       if(q.opts[letter]){
         optsHtml += `
-          <label class="opt">
+          <label class="opt" data-opt="${letter}">
             <input type="radio" name="mc${q.n}" value="${letter}">
             <span class="opt-text"><span class="opt-letter">${letter}.</span> ${q.opts[letter]}</span>
           </label>`;
@@ -349,11 +371,11 @@ function buildMC(){
       <div class="qnum">Statement ${q.n}</div>
       <div class="qtext">${q.text}</div>
       <div class="opts">
-        <label class="opt">
+        <label class="opt" data-opt="T">
           <input type="radio" name="tf${q.n}" value="T">
           <span class="opt-text"><span class="opt-letter">T</span></span>
         </label>
-        <label class="opt">
+        <label class="opt" data-opt="F">
           <input type="radio" name="tf${q.n}" value="F">
           <span class="opt-text"><span class="opt-letter">F</span></span>
         </label>
@@ -384,6 +406,45 @@ function updateProgress(){
   });
 }
 
+let answersRevealed = false;
+
+function eachQuestion(fn){
+  mcQuestions.forEach(q=> fn(q, document.getElementById('mc-q-'+q.n)));
+  tfQuestions.forEach(q=> fn(q, document.getElementById('tf-q-'+q.n)));
+}
+
+function showAnswers(){
+  eachQuestion((q, el)=>{
+    el.classList.add('revealed');
+    const target = el.querySelector(`.opt[data-opt="${q.ans}"]`);
+    if(target) target.classList.add('is-answer');
+    const verdict = el.querySelector('.verdict');
+    verdict.className = 'verdict reveal';
+    verdict.textContent = `Correct answer: ${q.ans}`;
+    verdict.style.display = 'block';
+  });
+  answersRevealed = true;
+  document.getElementById('showAnswersBtn').textContent = 'Hide answers';
+}
+
+function hideAnswers(){
+  eachQuestion((q, el)=>{
+    el.classList.remove('revealed');
+    el.querySelectorAll('.opt.is-answer').forEach(o=> o.classList.remove('is-answer'));
+    const verdict = el.querySelector('.verdict');
+    verdict.className = 'verdict';
+    verdict.textContent = '';
+    verdict.style.display = 'none';
+  });
+  answersRevealed = false;
+  document.getElementById('showAnswersBtn').textContent = 'Show answers';
+}
+
+function toggleAnswers(){
+  if(answersRevealed) hideAnswers();
+  else showAnswers();
+}
+
 function gradeExam(){
   let missing = [];
   mcQuestions.forEach(q=>{ if(!document.querySelector(`input[name="mc${q.n}"]:checked`)) missing.push('MC '+q.n); });
@@ -396,6 +457,7 @@ function gradeExam(){
     return;
   }
   missingNote.style.display = 'none';
+  if(answersRevealed) hideAnswers();
 
   let score = 0;
   mcQuestions.forEach(q=>{
@@ -447,16 +509,24 @@ function gradeExam(){
   detailEl.textContent = `Score: ${pct}% · Passing mark: 80% (40/50)`;
 
   document.getElementById('submitBtn').disabled = true;
+  const showBtn = document.getElementById('showAnswersBtn');
+  showBtn.disabled = true;
+  showBtn.textContent = 'Answers shown';
   window.scrollTo({top:0, behavior:'smooth'});
 }
 
 function resetExam(){
   document.querySelectorAll('input[type=radio]').forEach(r=>r.checked=false);
   document.querySelectorAll('.q').forEach(el=>{
-    el.classList.remove('correct','incorrect','answered');
+    el.classList.remove('correct','incorrect','answered','revealed');
+    el.querySelectorAll('.opt.is-answer').forEach(o=> o.classList.remove('is-answer'));
     const v = el.querySelector('.verdict');
-    if(v){ v.style.display='none'; }
+    if(v){ v.className='verdict'; v.textContent=''; v.style.display='none'; }
   });
+  answersRevealed = false;
+  const showBtn = document.getElementById('showAnswersBtn');
+  showBtn.disabled = false;
+  showBtn.textContent = 'Show answers';
   document.getElementById('resultArea').style.display = 'none';
   document.getElementById('submitBtn').disabled = false;
   document.getElementById('missingNote').style.display = 'none';
@@ -467,6 +537,7 @@ function resetExam(){
 buildMC();
 document.getElementById('quizForm').addEventListener('change', updateProgress);
 document.getElementById('submitBtn').addEventListener('click', gradeExam);
+document.getElementById('showAnswersBtn').addEventListener('click', toggleAnswers);
 document.getElementById('resetLink').addEventListener('click', resetExam);
 updateProgress();
 </script>
