@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Variable Unit-Linked — Mock Exam</title>
+<meta name="description" content="Variable Unit-Linked mock exam: 100 multiple choice items, 80% to pass. Study or timed mode.">
+<link rel="icon" href="/mockexam/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/mockexam/exam.css">
+</head>
+<body>
+<div class="sheet">
+
+  <a class="backlink" href="/mockexam/variable-unit-linked-reviewers">&larr; Variable Unit-Linked reviewers</a>
+
+  <header>
+    <div class="eyebrow">Simulated Exam</div>
+    <h1>Variable Unit-Linked</h1>
+    <div class="sub">100 items total · all multiple choice · 80% (80/100) required to pass</div>
+  </header>
+
+  <main id="exam"></main>
+
+</div>
+
+<script src="/mockexam/exam.js"></script>
+<script src="/mockexam/variable-unit-linked/questions.js"></script>
+<script>
+initExam({
+  passPct: 80,
+  sections: [
+    {title:"Part A — Multiple Choice", type:"mc", key:"vul", shortLabel:"VUL", itemLabel:"Question", items: vulQuestions}
+  ]
+});
+</script>
+</body>
+</html>

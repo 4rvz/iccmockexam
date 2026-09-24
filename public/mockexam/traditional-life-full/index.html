@@ -3,45 +3,27 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>IIAP Traditional Life — Simulated Exam</title>
-<link rel="stylesheet" href="/iccmockexam/exam.css">
+<title>Traditional Life Full-Length — Mock Exam</title>
+<meta name="description" content="Full-length Traditional Life mock exam: 122 multiple choice items, 80% to pass. Study or timed mode.">
+<link rel="icon" href="/mockexam/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/mockexam/exam.css">
 </head>
 <body>
 <div class="sheet">
 
-  <a class="backlink" href="/iccmockexam">&larr; Reviewers</a>
+  <a class="backlink" href="/mockexam/traditional-life-reviewers">&larr; Traditional Life reviewers</a>
 
   <header>
-    <div class="eyebrow">IIAP — Simulated Examination</div>
+    <div class="eyebrow">Simulated Exam — Full-Length</div>
     <h1>Traditional Life</h1>
     <div class="sub">122 multiple choice · 80% (98/122) required to pass</div>
   </header>
 
-  <div class="progress-wrap">
-    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
-    <div class="progress-label" id="progressLabel">0 of 122 answered</div>
-  </div>
-
-  <div id="resultArea">
-    <div class="result-card" id="resultCard">
-      <div class="result-verdict" id="resultVerdict"></div>
-      <div class="result-score" id="resultScore"></div>
-      <div class="result-detail" id="resultDetail"></div>
-      <div class="reset-link" id="resetLink">Clear answers and retry</div>
-    </div>
-  </div>
-
-  <div id="quizForm"></div>
-
-  <div class="submit-bar">
-    <button id="submitBtn">Submit exam</button>
-    <button id="showAnswersBtn">Show answers</button>
-    <div class="missing-note" id="missingNote" style="display:none;"></div>
-  </div>
+  <main id="exam"></main>
 
 </div>
 
-<script src="/iccmockexam/exam.js"></script>
+<script src="/mockexam/exam.js"></script>
 <script>
 const questions = [
 {n:1, text:"A single premium policy means a policy", opts:{A:"requiring only a single premium each year",B:"under which only one premium payment is required",C:"only available to single individuals",D:"on which no more than one premium can be paid in advance"}, ans:"B"},

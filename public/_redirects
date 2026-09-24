@@ -1,0 +1,3 @@
+/iccmockexam/iiap-trad  /mockexam/traditional-life-full  301
+/iccmockexam  /mockexam  301
+/iccmockexam/*  /mockexam/:splat  301

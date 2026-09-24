@@ -3,45 +3,27 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Traditional Life — IC Simulated Exam</title>
-<link rel="stylesheet" href="/iccmockexam/exam.css">
+<title>Traditional Life — Mock Exam</title>
+<meta name="description" content="Traditional Life mock exam: 40 multiple choice and 10 true/false items, 80% to pass. Study or timed mode.">
+<link rel="icon" href="/mockexam/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/mockexam/exam.css">
 </head>
 <body>
 <div class="sheet">
 
-  <a class="backlink" href="/iccmockexam">&larr; Reviewers</a>
+  <a class="backlink" href="/mockexam/traditional-life-reviewers">&larr; Traditional Life reviewers</a>
 
   <header>
-    <div class="eyebrow">Insurance Commission — Simulated Examination</div>
+    <div class="eyebrow">Simulated Exam</div>
     <h1>Traditional Life</h1>
     <div class="sub">40 multiple choice + 10 true/false · 50 items total · 80% (40/50) required to pass</div>
   </header>
 
-  <div class="progress-wrap">
-    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
-    <div class="progress-label" id="progressLabel">0 of 50 answered</div>
-  </div>
-
-  <div id="resultArea">
-    <div class="result-card" id="resultCard">
-      <div class="result-verdict" id="resultVerdict"></div>
-      <div class="result-score" id="resultScore"></div>
-      <div class="result-detail" id="resultDetail"></div>
-      <div class="reset-link" id="resetLink">Clear answers and retry</div>
-    </div>
-  </div>
-
-  <div id="quizForm"></div>
-
-  <div class="submit-bar">
-    <button id="submitBtn">Submit exam</button>
-    <button id="showAnswersBtn">Show answers</button>
-    <div class="missing-note" id="missingNote" style="display:none;"></div>
-  </div>
+  <main id="exam"></main>
 
 </div>
 
-<script src="/iccmockexam/exam.js"></script>
+<script src="/mockexam/exam.js"></script>
 <script>
 const mcQuestions = [
 {n:1, text:"If a policyowner avails of a claim, what are his basic settlement options?", opts:{A:"Double indemnity, total and permanent disability waiver",B:"Fixed amount, fixed period, life income, interest on deposit",C:"Policy loan, guaranteed insurability",D:"Cash surrender value, automatic premium loan"}, ans:"B"},
