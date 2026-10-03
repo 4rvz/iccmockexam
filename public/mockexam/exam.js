@@ -12,6 +12,10 @@
  *
  * Progress is saved to localStorage per page, so a refresh or a closed tab
  * picks up where the user left off.
+ *
+ * Each start shuffles the questions within every section and the choices within
+ * every "mc" item. The shuffle is saved with the progress, so it holds across
+ * reloads. Answers are always stored by the item's original letter.
  */
 
 function initExam(config){
@@ -27,6 +31,11 @@ function initExam(config){
   const legacyKey = 'iccmockexam:' + location.pathname.replace(/\/+$/, '')
     .replace(/^\/mockexam/, '/iccmockexam').replace(/\/traditional-life-full$/, '/iiap-trad');
   const scrollBehavior = matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+
+  // "All of the above" and friends keep their slot; a choice that names another
+  // choice by letter ("Both a & b") means the whole item keeps its order.
+  const PINNED = /\b(all|none|any)\b.*\babove\b/i;
+  const NAMES_LETTER = /^(both|either|neither) [a-d]\b|\b[a-d] (&|and|or) [a-d]\b/i;
 
   let state = load() || freshState();
   let flagMissing = false;
@@ -51,7 +60,54 @@ function initExam(config){
 
   function freshState(){
     return {v: 1, mode: null, startedAt: null, deadline: null, answers: {}, checked: [],
-            graded: false, timeUp: false, round: null, firstScore: null};
+            graded: false, timeUp: false, round: null, firstScore: null, order: null, opts: null};
+  }
+
+  /* ---- Shuffle ---- */
+
+  function shuffle(list){
+    const a = list.slice();
+    for(let i = a.length - 1; i > 0; i--){
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function letters(s, q){
+    return s.type === 'tf' ? ['T', 'F'] : ['A', 'B', 'C', 'D'].filter(l => q.opts[l]);
+  }
+
+  function shuffleOpts(s, q){
+    const base = letters(s, q);
+    if(s.type === 'tf' || base.some(l => NAMES_LETTER.test(q.opts[l]))) return base;
+    const loose = shuffle(base.filter(l => !PINNED.test(q.opts[l])));
+    return base.map(l => PINNED.test(q.opts[l]) ? l : loose.shift());
+  }
+
+  function shuffled(){
+    return {
+      order: Object.fromEntries(sections.map(s => [s.key, shuffle(s.items.map(q => s.key + q.n))])),
+      opts: Object.fromEntries(allItems.map(it => [it.name, shuffleOpts(it.section, it.q)])),
+    };
+  }
+
+  // Fill in or repair the saved shuffle so it covers exactly the current items.
+  function withLayout(st){
+    const fresh = shuffled();
+    const order = {}, opts = {};
+    sections.forEach(s => {
+      const saved = (st.order && st.order[s.key] || []).filter(n => byName[n] && byName[n].section === s);
+      const added = fresh.order[s.key].filter(n => !saved.includes(n));
+      order[s.key] = saved.concat(added);
+    });
+    allItems.forEach(it => {
+      const saved = st.opts && st.opts[it.name];
+      const base = letters(it.section, it.q);
+      const valid = saved && saved.length === base.length && base.every(l => saved.includes(l));
+      opts[it.name] = valid ? saved : fresh.opts[it.name];
+    });
+    return {...st, order, opts};
   }
 
   function load(){
@@ -63,7 +119,7 @@ function initExam(config){
       saved.checked = (saved.checked || []).filter(n => byName[n]);
       if(saved.round) saved.round = saved.round.filter(n => byName[n]);
       if(saved.round && !saved.round.length) saved.round = null;
-      return {...freshState(), ...saved};
+      return withLayout({...freshState(), ...saved});
     }catch(e){ return null; }
   }
 
@@ -75,10 +131,17 @@ function initExam(config){
     try{ localStorage.removeItem(storageKey); localStorage.removeItem(legacyKey); }catch(e){}
   }
 
-  const active = () => state.round ? state.round.map(n => byName[n]) : allItems;
+  const position = name => {
+    const it = byName[name];
+    return sections.indexOf(it.section) * 1e6 + (state.order ? state.order[it.section.key].indexOf(name) : it.q.n);
+  };
+  const active = () => (state.round ? state.round.map(n => byName[n]) : allItems.slice())
+    .sort((a, b) => position(a.name) - position(b.name));
   const isCorrect = it => state.answers[it.name] === it.q.ans;
   const cardOf = name => document.getElementById(byName[name].section.key + '-q-' + byName[name].q.n);
-  const answerLabel = (section, v) => section.type === 'tf' ? (v === 'T' ? 'True' : 'False') : v;
+  // The letter a choice shows on screen after shuffling.
+  const shownLetter = (name, v) => state.opts ? 'ABCD'[state.opts[name].indexOf(v)] : v;
+  const answerLabel = (section, v, name) => section.type === 'tf' ? (v === 'T' ? 'True' : 'False') : shownLetter(name, v);
   const isLocked = name => state.graded || state.checked.includes(name);
 
   /* ---- Build ---- */
@@ -100,8 +163,7 @@ function initExam(config){
 
   function buildCard(s, q){
     const name = s.key + q.n;
-    const letters = s.type === 'tf' ? ['T', 'F'] : ['A', 'B', 'C', 'D'].filter(l => q.opts[l]);
-    const opts = letters.map(letter => h('label', {class: 'opt', 'data-opt': letter},
+    const opts = letters(s, q).map(letter => h('label', {class: 'opt', 'data-opt': letter},
       h('input', {type: 'radio', name, value: letter}),
       h('span', {class: 'opt-text'},
         h('span', {class: 'opt-letter', text: s.type === 'tf' ? answerLabel(s, letter) : letter + '.'}),
@@ -110,7 +172,7 @@ function initExam(config){
     const id = s.key + '-q-' + q.n;
     return h('fieldset', {class: s.type === 'tf' ? 'q tf-row' : 'q', id},
       h('legend', {},
-        h('span', {class: 'qnum', text: `${s.itemLabel || 'Question'} ${q.n}`}),
+        h('span', {class: 'qnum'}),
         h('span', {class: 'qtext', text: q.text})),
       h('div', {class: 'opts'}, opts),
       h('div', {class: 'q-foot'},
@@ -132,12 +194,32 @@ function initExam(config){
   const result = h('section', {class: 'result-card', tabindex: '-1', 'aria-label': 'Result', hidden: true});
 
   const form = h('form', {class: 'quiz', onsubmit: e => e.preventDefault()});
-  sections.forEach(s => {
+  const parts = sections.map(s => {
     const part = h('section', {class: 'part'});
     if(s.title) part.append(h('h2', {class: 'section-title', text: s.title}));
     s.items.forEach(q => part.append(buildCard(s, q)));
     form.append(part);
+    return part;
   });
+
+  // Put cards and choices in the saved shuffled order, and number them as shown.
+  function layout(){
+    if(!state.order) return;
+    sections.forEach((s, i) => {
+      state.order[s.key].forEach((name, pos) => {
+        const card = cardOf(name);
+        card.querySelector('.qnum').textContent = `${s.itemLabel || 'Question'} ${pos + 1}`;
+        parts[i].append(card);
+        if(s.type === 'tf') return;
+        const opts = card.querySelector('.opts');
+        state.opts[name].forEach((letter, k) => {
+          const opt = opts.querySelector(`[data-opt="${letter}"]`);
+          opt.querySelector('.opt-letter').textContent = 'ABCD'[k] + '.';
+          opts.append(opt);
+        });
+      });
+    });
+  }
 
   const submitBtn = h('button', {type: 'button', class: 'btn primary', onclick: requestSubmit});
   const confirmText = h('p', {class: 'confirm-text', role: 'alert'});
@@ -191,10 +273,10 @@ function initExam(config){
     const verdict = card.querySelector('.verdict');
     verdict.hidden = !reveal;
     if(reveal){
-      const ans = answerLabel(section, q.ans);
+      const ans = answerLabel(section, q.ans, name);
       verdict.className = 'verdict ' + (chosen === q.ans ? 'ok' : 'bad');
       verdict.textContent = chosen === q.ans ? `Correct — ${ans}.`
-        : chosen ? `Incorrect — you chose ${answerLabel(section, chosen)}. The answer is ${ans}.`
+        : chosen ? `Incorrect — you chose ${answerLabel(section, chosen, name)}. The answer is ${ans}.`
         : `Not answered. The answer is ${ans}.`;
     }
     card.querySelector('[data-check]').hidden = !(state.mode === 'study' && chosen && !reveal);
@@ -292,8 +374,9 @@ function initExam(config){
   function start(){
     const mode = startPanel.querySelector('input[name=mode]:checked').value;
     const now = Date.now();
-    state = {...freshState(), mode, startedAt: now, deadline: mode === 'exam' ? now + minutes * 60000 : null};
+    state = {...freshState(), ...shuffled(), mode, startedAt: now, deadline: mode === 'exam' ? now + minutes * 60000 : null};
     save();
+    layout();
     render();
     form.querySelector('input').focus({preventScroll: true});
   }
@@ -418,6 +501,8 @@ function initExam(config){
     cardOf(name).querySelector('.verdict').focus({preventScroll: true});
   });
 
+  if(state.startedAt) save();
+  layout();
   render();
 
   return {passMark, totalItems};
