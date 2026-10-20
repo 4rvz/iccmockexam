@@ -85,3 +85,14 @@ test('the Variable Unit-Linked answer sheet shows 80 questions, each with its an
   assert.equal((sheet.match(/<p class="answer">/g) || []).length, 80);
   assert.doesNotMatch(sheet, /<input|<script|initExam/);
 });
+
+test('each category card on the chooser states how many reviewers its page lists', async () => {
+  const chooser = await readProjectFile('public/mockexam/index.html');
+  const cards = [...chooser.matchAll(/href="\/mockexam\/([\w-]+-reviewers)">[^<]*<\/a><\/h2>\s*<div class="reviewer-meta">(\d+) reviewers? available/g)];
+
+  assert.equal(cards.length, 2);
+  for (const [, page, count] of cards) {
+    const list = await readProjectFile(`public/mockexam/${page}/index.html`);
+    assert.equal((list.match(/class="reviewer-link"/g) || []).length, Number(count), page);
+  }
+});
