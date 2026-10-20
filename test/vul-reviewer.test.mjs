@@ -96,3 +96,14 @@ test('each category card on the chooser states how many reviewers its page lists
     assert.equal((list.match(/class="reviewer-link"/g) || []).length, Number(count), page);
   }
 });
+
+test('every mock exam page carries the practice-only disclaimer', async () => {
+  const pages = ['index.html', 'traditional-life-reviewers/index.html', 'variable-unit-linked-reviewers/index.html',
+    'non-life-insurance/index.html', 'traditional-life/index.html', 'traditional-life-full/index.html',
+    'variable-unit-linked/index.html', 'variable-unit-linked-mock-1/index.html',
+    'variable-unit-linked-mock-2/index.html', 'variable-unit-linked-answers/index.html'];
+  for (const page of pages) {
+    const html = await readProjectFile('public/mockexam/' + page);
+    assert.match(html, /<footer class="disclaimer">.*unofficial practice questions.*not actual licensing exam questions/, page);
+  }
+});

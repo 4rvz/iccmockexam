@@ -485,3 +485,15 @@ h1{
   letter-spacing: 0.04em;
   margin-right: 6px;
 }
+
+/* ---- Disclaimer ---- */
+.disclaimer{
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--muted);
+  margin-top: 32px;
+  padding-top: 14px;
+  border-top: 1px solid var(--rule);
+}
+.disclaimer strong{ color: var(--ink); font-weight: 600; }
+.chooser-note + .disclaimer{ margin-top: 10px; padding-top: 0; border-top: 0; }
