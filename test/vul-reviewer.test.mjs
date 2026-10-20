@@ -27,13 +27,17 @@ test('each category owns its own reviewer choices or empty state', async () => {
   assert.match(traditional, /href="\/mockexam\/traditional-life"/);
   assert.match(traditional, /href="\/mockexam\/traditional-life-full"/);
   assert.match(variable, /href="\/mockexam\/variable-unit-linked"/);
+  assert.match(variable, /href="\/mockexam\/variable-unit-linked-mock-1"/);
+  assert.match(variable, /href="\/mockexam\/variable-unit-linked-mock-2"/);
+  assert.match(variable, /href="\/mockexam\/variable-unit-linked-answers"/);
   assert.match(nonLife, /Coming soon/);
 });
 
 test('pages carry no Insurance Commission or IIAP branding', async () => {
   const pages = ['index.html', 'traditional-life-reviewers/index.html', 'variable-unit-linked-reviewers/index.html',
     'non-life-insurance/index.html', 'traditional-life/index.html', 'traditional-life-full/index.html',
-    'variable-unit-linked/index.html'];
+    'variable-unit-linked/index.html', 'variable-unit-linked-mock-1/index.html',
+    'variable-unit-linked-mock-2/index.html', 'variable-unit-linked-answers/index.html'];
   for (const page of pages) {
     const html = await readProjectFile('public/mockexam/' + page);
     const chrome = html.split(/const \w+ = \[/)[0]; // page copy only, not question data
@@ -57,4 +61,27 @@ test('the Variable Unit-Linked reviewer contains a complete 100-question exam', 
   assert.equal((questions.match(/"n": \d+, "text":/g) || []).length, 100);
   assert.match(questions, /"n": 1, "text":.*?"ans": "A"/);
   assert.match(questions, /"n": 100, "text":.*?"ans": "A"/);
+});
+
+for (const [set, key, first, last] of [[1, 'vulm1', 'B', 'A'], [2, 'vulm2', 'A', 'D']]) {
+  test(`Variable Unit-Linked Mock Exam ${set} contains a complete 50-question exam`, async () => {
+    const reviewer = await readProjectFile(`public/mockexam/variable-unit-linked-mock-${set}/index.html`);
+    const questions = await readProjectFile(`public/mockexam/variable-unit-linked-mock-${set}/questions.js`);
+
+    assert.match(reviewer, new RegExp(`Mock Exam ${set}`));
+    assert.match(reviewer, /50 items total/);
+    assert.match(reviewer, /passPct:\s*80/);
+    assert.match(reviewer, new RegExp(`key:"${key}"`));
+    assert.equal((questions.match(/"n": \d+, "text":/g) || []).length, 50);
+    assert.match(questions, new RegExp(`"n": 1, "text":.*?"ans": "${first}"`));
+    assert.match(questions, new RegExp(`"n": 50, "text":.*?"ans": "${last}"`));
+  });
+}
+
+test('the Variable Unit-Linked answer sheet shows 80 questions, each with its answer and nothing to answer', async () => {
+  const sheet = await readProjectFile('public/mockexam/variable-unit-linked-answers/index.html');
+
+  assert.equal((sheet.match(/<article class="q study">/g) || []).length, 80);
+  assert.equal((sheet.match(/<p class="answer">/g) || []).length, 80);
+  assert.doesNotMatch(sheet, /<input|<script|initExam/);
 });

@@ -458,3 +458,30 @@ h1{
 @media (prefers-reduced-motion: reduce){
   *{ transition: none !important; }
 }
+
+/* ---- Answer sheet (read-only) ---- */
+.study .qtext{ margin: 0 0 10px; }
+.statements{
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0 0 0 14px;
+  border-left: 2px solid var(--rule);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 15px;
+}
+.answer{
+  margin: 0;
+  padding-top: 8px;
+  border-top: 1px dashed var(--rule);
+  color: var(--pass);
+  font-size: 15px;
+}
+.answer-label{
+  font-family: var(--mono);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-right: 6px;
+}
