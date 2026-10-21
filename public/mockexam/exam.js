@@ -161,6 +161,15 @@ function initExam(config){
       h('p', {class: 'start-note', text: 'Your answers are saved in this browser, so you can close the tab and pick up where you left off.'}));
   }
 
+  // Roman-numeral statements ("I. ... II. ...") each go on their own line.
+  const STATEMENT = /\s+(?=(?:I|II|III|IV|V|VI)\.\s)/;
+  function questionText(text){
+    const parts = text.split(STATEMENT);
+    if(parts.length < 3 || !/^I\.\s/.test(parts[1])) return h('span', {class: 'qtext', text});
+    return h('span', {class: 'qtext'}, parts[0],
+      h('span', {class: 'statements'}, parts.slice(1).map(p => h('span', {class: 'statement', text: p}))));
+  }
+
   function buildCard(s, q){
     const name = s.key + q.n;
     const opts = letters(s, q).map(letter => h('label', {class: 'opt', 'data-opt': letter},
@@ -173,7 +182,7 @@ function initExam(config){
     return h('fieldset', {class: s.type === 'tf' ? 'q tf-row' : 'q', id},
       h('legend', {},
         h('span', {class: 'qnum'}),
-        h('span', {class: 'qtext', text: q.text})),
+        questionText(q.text)),
       h('div', {class: 'opts'}, opts),
       h('div', {class: 'q-foot'},
         h('button', {type: 'button', class: 'btn small', 'data-check': name, hidden: true}, 'Check answer'),

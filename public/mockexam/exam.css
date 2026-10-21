@@ -225,6 +225,8 @@ h1{
   margin-bottom: 4px;
 }
 .qtext{ display:block; font-size: 16px; }
+.statements{ display:block; margin-top: 8px; }
+.statement{ display:block; padding-left: 2em; text-indent: -2em; margin-top: 4px; }
 .opts{
   display:flex;
   flex-direction:column;
