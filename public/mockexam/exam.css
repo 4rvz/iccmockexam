@@ -144,6 +144,15 @@ h1{
 .mode-opt input{ margin-top: 4px; accent-color: var(--brass); width:16px; height:16px; flex-shrink:0; }
 .mode-title{ display:block; font-weight:700; font-size: 16px; }
 .mode-desc{ display:block; font-size: 15px; color: var(--muted); }
+.shuffle-opt{
+  display:flex;
+  gap: 12px;
+  align-items:flex-start;
+  padding: 0 16px;
+  margin: -4px 0 18px;
+  cursor: pointer;
+}
+.shuffle-opt input{ margin-top: 4px; accent-color: var(--brass); width:16px; height:16px; flex-shrink:0; }
 .start-note{ font-size: 14px; color: var(--muted); margin: 14px 0 0; }
 
 /* ---- Progress ---- */

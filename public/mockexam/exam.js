@@ -13,9 +13,11 @@
  * Progress is saved to localStorage per page, so a refresh or a closed tab
  * picks up where the user left off.
  *
- * Each start shuffles the questions within every section and the choices within
- * every "mc" item. The shuffle is saved with the progress, so it holds across
- * reloads. Answers are always stored by the item's original letter.
+ * Questions and choices keep their written order unless the user ticks
+ * "Shuffle" on the start panel. Then each start shuffles the questions within
+ * every section and the choices within every "mc" item. The shuffle is saved
+ * with the progress, so it holds across reloads. Answers are always stored by
+ * the item's original letter.
  */
 
 function initExam(config){
@@ -94,6 +96,7 @@ function initExam(config){
 
   // Fill in or repair the saved shuffle so it covers exactly the current items.
   function withLayout(st){
+    if(!st.order) return st;
     const fresh = shuffled();
     const order = {}, opts = {};
     sections.forEach(s => {
@@ -157,6 +160,11 @@ function initExam(config){
       h('div', {class: 'modes', role: 'radiogroup', 'aria-labelledby': 'startTitle'},
         choice('study', 'Study', 'Check each answer as you go. No clock.'),
         choice('exam', 'Timed exam', `${minutes} minutes on the clock. Answers stay hidden until you submit.`)),
+      h('label', {class: 'shuffle-opt'},
+        h('input', {type: 'checkbox', name: 'shuffle'}),
+        h('span', {},
+          h('span', {class: 'mode-title', text: 'Shuffle'}),
+          h('span', {class: 'mode-desc', text: 'Mix up the order of the questions and their choices.'}))),
       h('button', {type: 'button', class: 'btn primary', onclick: start}, 'Start'),
       h('p', {class: 'start-note', text: 'Your answers are saved in this browser, so you can close the tab and pick up where you left off.'}));
   }
@@ -211,17 +219,18 @@ function initExam(config){
     return part;
   });
 
-  // Put cards and choices in the saved shuffled order, and number them as shown.
+  // Put cards and choices in the saved order (shuffled or as written), and
+  // number them as shown.
   function layout(){
-    if(!state.order) return;
     sections.forEach((s, i) => {
-      state.order[s.key].forEach((name, pos) => {
+      const order = state.order ? state.order[s.key] : s.items.map(q => s.key + q.n);
+      order.forEach((name, pos) => {
         const card = cardOf(name);
         card.querySelector('.qnum').textContent = `${s.itemLabel || 'Question'} ${pos + 1}`;
         parts[i].append(card);
         if(s.type === 'tf') return;
         const opts = card.querySelector('.opts');
-        state.opts[name].forEach((letter, k) => {
+        (state.opts ? state.opts[name] : letters(s, byName[name].q)).forEach((letter, k) => {
           const opt = opts.querySelector(`[data-opt="${letter}"]`);
           opt.querySelector('.opt-letter').textContent = 'ABCD'[k] + '.';
           opts.append(opt);
@@ -382,8 +391,9 @@ function initExam(config){
 
   function start(){
     const mode = startPanel.querySelector('input[name=mode]:checked').value;
+    const mix = startPanel.querySelector('input[name=shuffle]').checked;
     const now = Date.now();
-    state = {...freshState(), ...shuffled(), mode, startedAt: now, deadline: mode === 'exam' ? now + minutes * 60000 : null};
+    state = {...freshState(), ...(mix ? shuffled() : {}), mode, startedAt: now, deadline: mode === 'exam' ? now + minutes * 60000 : null};
     save();
     layout();
     render();
