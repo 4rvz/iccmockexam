@@ -452,6 +452,11 @@ h1{
   border-top: 1px solid var(--rule);
 }
 
+/* Pinch-zoomed: sticky bars would float over the questions (set in exam.js) */
+.zoomed .progress-wrap,
+.zoomed .submit-bar,
+.zoomed .submit-bar:has(.confirm:not([hidden])){ position: static; }
+
 /* Small screens: one sticky bar at a time */
 @media (max-width: 600px){
   body{ padding-top: 16px; }

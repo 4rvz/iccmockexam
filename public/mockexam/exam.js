@@ -520,6 +520,15 @@ function initExam(config){
     cardOf(name).querySelector('.verdict').focus({preventScroll: true});
   });
 
+  // Pinch-zoomed in, iOS pins sticky bars to the unzoomed viewport, so they float
+  // mid-screen over the questions. Let them scroll with the page until zoomed back out.
+  const vv = window.visualViewport;
+  if(vv){
+    const syncZoom = () => document.documentElement.classList.toggle('zoomed', vv.scale > 1.01);
+    vv.addEventListener('resize', syncZoom);
+    syncZoom();
+  }
+
   if(state.startedAt) save();
   layout();
   render();
